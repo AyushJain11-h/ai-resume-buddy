@@ -70,8 +70,8 @@ const HeroSection = () => {
             <div className="flex items-center gap-2 px-4 py-3 border-b border-border/60 bg-muted/50">
               <div className="flex gap-1.5">
                 <div className="w-3 h-3 rounded-full bg-destructive/60" />
-                <div className="w-3 h-3 rounded-full bg-yellow-400/60" />
-                <div className="w-3 h-3 rounded-full bg-green-400/60" />
+                <div className="w-3 h-3 rounded-full bg-primary/30" />
+                <div className="w-3 h-3 rounded-full bg-primary/50" />
               </div>
               <span className="text-xs text-muted-foreground ml-2">ResumeLM — Dashboard</span>
             </div>
