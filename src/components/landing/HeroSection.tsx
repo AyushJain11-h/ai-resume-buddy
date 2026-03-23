@@ -1,13 +1,31 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles, FileText, BarChart3 } from "lucide-react";
+import heroBg from "@/assets/hero-bg.png";
 
 const HeroSection = () => {
   return (
     <section className="relative bg-hero pt-32 pb-20 overflow-hidden">
+      {/* Background resume image */}
+      <div className="absolute inset-0 pointer-events-none">
+        <img
+          src={heroBg}
+          alt=""
+          className="absolute right-0 top-10 w-[600px] opacity-[0.08] dark:opacity-[0.05] select-none"
+          aria-hidden="true"
+        />
+        <img
+          src={heroBg}
+          alt=""
+          className="absolute -left-20 bottom-0 w-[500px] opacity-[0.05] dark:opacity-[0.03] rotate-12 select-none"
+          aria-hidden="true"
+        />
+      </div>
+
       {/* Decorative orbs */}
       <div className="absolute top-20 left-1/4 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
       <div className="absolute bottom-10 right-1/4 w-96 h-96 bg-primary-glow/5 rounded-full blur-3xl" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/3 rounded-full blur-[120px]" />
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-4xl mx-auto text-center">

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -40,14 +42,22 @@ const Navbar = () => {
           ))}
         </div>
 
-        <div className="hidden md:flex items-center gap-3">
-          <Button variant="ghost" size="sm">Log in</Button>
-          <Button variant="hero" size="sm">Get Started Free</Button>
+        <div className="hidden md:flex items-center gap-2">
+          <ThemeToggle />
+          <Link to="/login">
+            <Button variant="ghost" size="sm">Log in</Button>
+          </Link>
+          <Link to="/signup">
+            <Button variant="hero" size="sm">Get Started Free</Button>
+          </Link>
         </div>
 
-        <button className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle />
+          <button onClick={() => setMobileOpen(!mobileOpen)}>
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       <AnimatePresence>
@@ -65,8 +75,12 @@ const Navbar = () => {
                 </a>
               ))}
               <div className="flex gap-2 pt-2">
-                <Button variant="ghost" size="sm" className="flex-1">Log in</Button>
-                <Button variant="hero" size="sm" className="flex-1">Get Started</Button>
+                <Link to="/login" className="flex-1">
+                  <Button variant="ghost" size="sm" className="w-full">Log in</Button>
+                </Link>
+                <Link to="/signup" className="flex-1">
+                  <Button variant="hero" size="sm" className="w-full">Get Started</Button>
+                </Link>
               </div>
             </div>
           </motion.div>
