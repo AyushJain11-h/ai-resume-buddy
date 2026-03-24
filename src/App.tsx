@@ -14,6 +14,7 @@ import ResumeEditor from "./pages/ResumeEditor.tsx";
 import CoverLetters from "./pages/CoverLetters.tsx";
 import JobTracker from "./pages/JobTracker.tsx";
 import Profile from "./pages/Profile.tsx";
+import ATSChecker from "./pages/ATSChecker.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/dashboard/resumes/new" element={<ResumeEditor />} />
           <Route path="/dashboard/cover-letters" element={<CoverLetters />} />
           <Route path="/dashboard/jobs" element={<JobTracker />} />
+          <Route path="/dashboard/ats-checker" element={<ATSChecker />} />
           <Route path="/dashboard/profile" element={<Profile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
