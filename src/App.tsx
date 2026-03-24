@@ -8,6 +8,12 @@ import LoginPage from "./pages/Login.tsx";
 import SignupPage from "./pages/Signup.tsx";
 import ForgotPasswordPage from "./pages/ForgotPassword.tsx";
 import ResetPasswordPage from "./pages/ResetPassword.tsx";
+import Dashboard from "./pages/Dashboard.tsx";
+import Resumes from "./pages/Resumes.tsx";
+import ResumeEditor from "./pages/ResumeEditor.tsx";
+import CoverLetters from "./pages/CoverLetters.tsx";
+import JobTracker from "./pages/JobTracker.tsx";
+import Profile from "./pages/Profile.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -24,6 +30,12 @@ const App = () => (
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard/resumes" element={<Resumes />} />
+          <Route path="/dashboard/resumes/new" element={<ResumeEditor />} />
+          <Route path="/dashboard/cover-letters" element={<CoverLetters />} />
+          <Route path="/dashboard/jobs" element={<JobTracker />} />
+          <Route path="/dashboard/profile" element={<Profile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
