@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FileText, LayoutDashboard, Briefcase, FileEdit, User, LogOut, Menu, X, ChevronRight } from "lucide-react";
+import { FileText, LayoutDashboard, Briefcase, FileEdit, User, LogOut, Menu, X, ChevronRight, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/ThemeToggle";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,6 +10,7 @@ const navItems = [
   { label: "Resumes", href: "/dashboard/resumes", icon: FileText },
   { label: "Cover Letters", href: "/dashboard/cover-letters", icon: FileEdit },
   { label: "Job Tracker", href: "/dashboard/jobs", icon: Briefcase },
+  { label: "ATS Checker", href: "/dashboard/ats-checker", icon: Target },
   { label: "Profile", href: "/dashboard/profile", icon: User },
 ];
 
