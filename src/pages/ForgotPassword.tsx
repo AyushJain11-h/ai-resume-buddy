@@ -4,16 +4,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FileText, ArrowLeft, Mail } from "lucide-react";
+import { FileText, ArrowLeft, Mail, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    // Will connect to Supabase resetPasswordForEmail when Cloud is enabled
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      setSubmitted(true);
+    }
   };
 
   return (
@@ -31,9 +43,7 @@ const ForgotPasswordPage = () => {
             ResumeLM
           </Link>
           <h1 className="text-2xl font-bold mt-4">Reset your password</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            We'll send you a link to reset it
-          </p>
+          <p className="text-muted-foreground text-sm mt-1">We'll send you a link to reset it</p>
         </div>
 
         <div className="card-gradient rounded-2xl border border-border/40 p-8 shadow-lg">
@@ -41,17 +51,10 @@ const ForgotPasswordPage = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
+                <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={loading} />
               </div>
-              <Button variant="hero" className="w-full py-5" type="submit">
-                Send Reset Link
+              <Button variant="hero" className="w-full py-5" type="submit" disabled={loading}>
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send Reset Link"}
               </Button>
             </form>
           ) : (
@@ -63,16 +66,13 @@ const ForgotPasswordPage = () => {
               <p className="text-sm text-muted-foreground mb-4">
                 We've sent a password reset link to <strong className="text-foreground">{email}</strong>
               </p>
-              <Button variant="ghost" onClick={() => setSubmitted(false)}>
-                Try another email
-              </Button>
+              <Button variant="ghost" onClick={() => setSubmitted(false)}>Try another email</Button>
             </div>
           )}
 
           <div className="mt-6 text-center">
             <Link to="/login" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Back to sign in
+              <ArrowLeft className="h-3.5 w-3.5" /> Back to sign in
             </Link>
           </div>
         </div>
