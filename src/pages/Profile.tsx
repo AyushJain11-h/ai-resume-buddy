@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,14 +7,89 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Save, User, Shield, Bell } from "lucide-react";
+import { Save, User, Shield, Bell, Loader2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const Profile = () => {
-  const [name, setName] = useState("John Doe");
-  const [email] = useState("john@example.com");
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [name, setName] = useState("");
   const [bio, setBio] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  useEffect(() => {
+    if (user) fetchProfile();
+  }, [user]);
+
+  const fetchProfile = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("full_name, bio")
+      .eq("user_id", user!.id)
+      .single();
+
+    if (data) {
+      setName(data.full_name ?? "");
+      setBio(data.bio ?? "");
+    }
+    setLoading(false);
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ full_name: name, bio })
+      .eq("user_id", user!.id);
+
+    setSaving(false);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Profile saved" });
+    }
+  };
+
+  const handlePasswordUpdate = async () => {
+    if (newPassword !== confirmPassword) {
+      toast({ title: "Passwords don't match", variant: "destructive" });
+      return;
+    }
+    setUpdatingPassword(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setUpdatingPassword(false);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Password updated" });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    }
+  };
+
+  const initials = name
+    ? name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    : user?.email?.[0]?.toUpperCase() ?? "?";
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -37,11 +112,11 @@ const Profile = () => {
               <CardContent className="space-y-6">
                 <div className="flex items-center gap-4">
                   <Avatar className="h-16 w-16">
-                    <AvatarFallback className="bg-primary text-primary-foreground text-lg">JD</AvatarFallback>
+                    <AvatarFallback className="bg-primary text-primary-foreground text-lg">{initials}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <Button variant="outline" size="sm">Change Avatar</Button>
-                    <p className="text-xs text-muted-foreground mt-1">JPG, PNG. Max 2MB.</p>
+                    <p className="text-sm font-medium">{name || "No name set"}</p>
+                    <p className="text-xs text-muted-foreground">{user?.email}</p>
                   </div>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
@@ -51,14 +126,17 @@ const Profile = () => {
                   </div>
                   <div className="space-y-1.5">
                     <Label>Email</Label>
-                    <Input value={email} disabled className="opacity-60" />
+                    <Input value={user?.email ?? ""} disabled className="opacity-60" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label>Bio</Label>
                   <Textarea placeholder="A short bio about yourself..." value={bio} onChange={(e) => setBio(e.target.value)} rows={3} />
                 </div>
-                <Button variant="hero" size="sm"><Save className="h-4 w-4 mr-1" /> Save Changes</Button>
+                <Button variant="hero" size="sm" onClick={handleSave} disabled={saving}>
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
+                  Save Changes
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -67,21 +145,23 @@ const Profile = () => {
             <Card className="border-border/50">
               <CardHeader><CardTitle className="text-base">Password & Security</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-1.5">
-                  <Label>Current Password</Label>
-                  <Input type="password" placeholder="••••••••" />
-                </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label>New Password</Label>
-                    <Input type="password" placeholder="••••••••" />
+                    <Input type="password" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                   </div>
                   <div className="space-y-1.5">
                     <Label>Confirm Password</Label>
-                    <Input type="password" placeholder="••••••••" />
+                    <Input type="password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                   </div>
                 </div>
-                <Button variant="hero" size="sm">Update Password</Button>
+                {newPassword && confirmPassword && newPassword !== confirmPassword && (
+                  <p className="text-xs text-destructive">Passwords don't match</p>
+                )}
+                <Button variant="hero" size="sm" onClick={handlePasswordUpdate} disabled={updatingPassword || !newPassword || newPassword !== confirmPassword}>
+                  {updatingPassword ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                  Update Password
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
