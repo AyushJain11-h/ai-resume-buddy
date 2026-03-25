@@ -1,21 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FileText, CheckCircle } from "lucide-react";
+import { FileText, CheckCircle, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const ResetPasswordPage = () => {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [done, setDone] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    // Handle the recovery token from the URL hash
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    if (hashParams.get("type") === "recovery") {
+      // Supabase client auto-handles the session from the hash
+    }
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirm) return;
-    setDone(true);
-    // Will connect to supabase.auth.updateUser when Cloud is enabled
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password });
+    setLoading(false);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      setDone(true);
+    }
   };
 
   return (
@@ -41,33 +60,17 @@ const ResetPasswordPage = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="password">New Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
+                <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} disabled={loading} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirm">Confirm Password</Label>
-                <Input
-                  id="confirm"
-                  type="password"
-                  placeholder="••••••••"
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
-                  required
-                  minLength={6}
-                />
+                <Input id="confirm" type="password" placeholder="••••••••" value={confirm} onChange={(e) => setConfirm(e.target.value)} required minLength={6} disabled={loading} />
                 {password && confirm && password !== confirm && (
                   <p className="text-xs text-destructive">Passwords don't match</p>
                 )}
               </div>
-              <Button variant="hero" className="w-full py-5" type="submit" disabled={!password || password !== confirm}>
-                Update Password
+              <Button variant="hero" className="w-full py-5" type="submit" disabled={loading || !password || password !== confirm}>
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update Password"}
               </Button>
             </form>
           ) : (
@@ -76,12 +79,8 @@ const ResetPasswordPage = () => {
                 <CheckCircle className="h-6 w-6 text-accent-foreground" />
               </div>
               <h3 className="font-semibold mb-2">Password updated!</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                You can now sign in with your new password.
-              </p>
-              <Link to="/login">
-                <Button variant="hero">Sign in</Button>
-              </Link>
+              <p className="text-sm text-muted-foreground mb-4">You can now sign in with your new password.</p>
+              <Link to="/login"><Button variant="hero">Sign in</Button></Link>
             </div>
           )}
         </div>
