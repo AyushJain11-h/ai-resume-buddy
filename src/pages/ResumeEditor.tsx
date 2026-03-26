@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,25 +6,19 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Sparkles, Download, Eye, Save, GripVertical } from "lucide-react";
+import { Plus, Trash2, Sparkles, Download, Eye, Save, GripVertical, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
-
-interface Experience {
-  id: number;
-  title: string;
-  company: string;
-  duration: string;
-  description: string;
-}
-
-interface Education {
-  id: number;
-  degree: string;
-  school: string;
-  year: string;
-}
+import { useToast } from "@/hooks/use-toast";
+import ResumePreview from "@/components/resume/ResumePreview";
+import type { Experience, Education } from "@/components/resume/ResumePreview";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 const ResumeEditor = () => {
+  const { toast } = useToast();
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [exporting, setExporting] = useState(false);
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -39,31 +33,51 @@ const ResumeEditor = () => {
 
   const addExperience = () =>
     setExperiences([...experiences, { id: Date.now(), title: "", company: "", duration: "", description: "" }]);
-
   const removeExperience = (id: number) =>
     setExperiences(experiences.filter((e) => e.id !== id));
-
   const updateExperience = (id: number, field: keyof Experience, value: string) =>
     setExperiences(experiences.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
 
   const addEducation = () =>
     setEducations([...educations, { id: Date.now(), degree: "", school: "", year: "" }]);
-
   const removeEducation = (id: number) =>
     setEducations(educations.filter((e) => e.id !== id));
-
   const updateEducation = (id: number, field: keyof Education, value: string) =>
     setEducations(educations.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
+
+  const handleExportPDF = async () => {
+    if (!previewRef.current) return;
+    setExporting(true);
+    try {
+      const canvas = await html2canvas(previewRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+      });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`${name || "resume"}.pdf`);
+      toast({ title: "PDF exported successfully" });
+    } catch {
+      toast({ title: "Export failed", description: "Could not generate PDF.", variant: "destructive" });
+    }
+    setExporting(false);
+  };
 
   return (
     <DashboardLayout>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Resume Editor</h1>
           <div className="flex gap-2">
             <Button variant="outline" size="sm"><Eye className="h-4 w-4 mr-1" /> Preview</Button>
-            <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1" /> Export PDF</Button>
+            <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={exporting}>
+              {exporting ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
+              Export PDF
+            </Button>
             <Button variant="hero" size="sm"><Save className="h-4 w-4 mr-1" /> Save</Button>
           </div>
         </div>
@@ -81,9 +95,7 @@ const ResumeEditor = () => {
 
               <TabsContent value="personal">
                 <Card className="border-border/50">
-                  <CardHeader>
-                    <CardTitle className="text-base">Personal Information</CardTitle>
-                  </CardHeader>
+                  <CardHeader><CardTitle className="text-base">Personal Information</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
@@ -116,9 +128,7 @@ const ResumeEditor = () => {
                 <Card className="border-border/50">
                   <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="text-base">Work Experience</CardTitle>
-                    <Button variant="outline" size="sm" onClick={addExperience}>
-                      <Plus className="h-3.5 w-3.5 mr-1" /> Add
-                    </Button>
+                    <Button variant="outline" size="sm" onClick={addExperience}><Plus className="h-3.5 w-3.5 mr-1" /> Add</Button>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {experiences.map((exp, idx) => (
@@ -167,9 +177,7 @@ const ResumeEditor = () => {
                 <Card className="border-border/50">
                   <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="text-base">Education</CardTitle>
-                    <Button variant="outline" size="sm" onClick={addEducation}>
-                      <Plus className="h-3.5 w-3.5 mr-1" /> Add
-                    </Button>
+                    <Button variant="outline" size="sm" onClick={addEducation}><Plus className="h-3.5 w-3.5 mr-1" /> Add</Button>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {educations.map((edu, idx) => (
@@ -227,57 +235,17 @@ const ResumeEditor = () => {
               <CardHeader className="border-b border-border/50 pb-3">
                 <CardTitle className="text-base">Live Preview</CardTitle>
               </CardHeader>
-              <CardContent className="p-6 min-h-[600px]">
-                <div className="space-y-4">
-                  <div className="text-center border-b border-border/50 pb-4">
-                    <h2 className="text-xl font-bold">{name || "Your Name"}</h2>
-                    <p className="text-sm text-muted-foreground">
-                      {[email, phone].filter(Boolean).join(" • ") || "email@example.com • (555) 000-0000"}
-                    </p>
-                  </div>
-                  {summary && (
-                    <div>
-                      <h3 className="text-sm font-semibold uppercase tracking-wider text-primary mb-1">Summary</h3>
-                      <p className="text-sm text-muted-foreground">{summary}</p>
-                    </div>
-                  )}
-                  {experiences.some((e) => e.title) && (
-                    <div>
-                      <h3 className="text-sm font-semibold uppercase tracking-wider text-primary mb-2">Experience</h3>
-                      {experiences.filter((e) => e.title).map((exp) => (
-                        <div key={exp.id} className="mb-3">
-                          <div className="flex justify-between">
-                            <p className="text-sm font-medium">{exp.title}</p>
-                            <p className="text-xs text-muted-foreground">{exp.duration}</p>
-                          </div>
-                          <p className="text-xs text-muted-foreground">{exp.company}</p>
-                          {exp.description && <p className="text-xs mt-1">{exp.description}</p>}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {educations.some((e) => e.degree) && (
-                    <div>
-                      <h3 className="text-sm font-semibold uppercase tracking-wider text-primary mb-2">Education</h3>
-                      {educations.filter((e) => e.degree).map((edu) => (
-                        <div key={edu.id} className="mb-2">
-                          <p className="text-sm font-medium">{edu.degree}</p>
-                          <p className="text-xs text-muted-foreground">{edu.school} • {edu.year}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {skills && (
-                    <div>
-                      <h3 className="text-sm font-semibold uppercase tracking-wider text-primary mb-2">Skills</h3>
-                      <div className="flex flex-wrap gap-1.5">
-                        {skills.split(",").map((s, i) => s.trim() && (
-                          <span key={i} className="text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded-full">{s.trim()}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+              <CardContent className="p-0 min-h-[600px]">
+                <ResumePreview
+                  ref={previewRef}
+                  name={name}
+                  email={email}
+                  phone={phone}
+                  summary={summary}
+                  skills={skills}
+                  experiences={experiences}
+                  educations={educations}
+                />
               </CardContent>
             </Card>
           </div>
